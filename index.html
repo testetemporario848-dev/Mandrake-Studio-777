@@ -2,52 +2,169 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Mandrake AI Studio</title>
+    
+    <!-- Carregamento de estilos externos (não bloqueante para o splash) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+    
     <style>
-      body {
-        font-family: 'Inter', sans-serif;
+      /* Estilos Críticos Inline: Garantem que o app tenha cor de fundo e loading IMEDIATO */
+      body, html {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
         background-color: #020617;
         color: #e2e8f0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
       }
-      .gradient-text {
-        background: linear-gradient(to right, #22d3ee, #3b82f6, #22d3ee);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-size: 200% auto;
-        animation: shine 4s linear infinite;
+      
+      /* Previne flash branco */
+      #root {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
       }
-      @keyframes shine {
-        to { background-position: 200% center; }
+
+      /* Estilos específicos para a tela de loading nativa */
+      .mandrake-splash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: #020617;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        transition: opacity 0.5s ease-out;
       }
-      .animate-fade-in {
-        animation: fadeIn 0.8s ease-out forwards;
+      
+      .mandrake-icon {
+        font-size: 4rem;
+        margin-bottom: 1.5rem;
+        filter: drop-shadow(0 0 15px rgba(34,211,238,0.4));
+        animation: float 3s ease-in-out infinite;
       }
-      @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
+
+      .mandrake-title {
+        font-size: 1.5rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        font-style: italic;
+        color: white;
+        letter-spacing: -1px;
       }
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar { width: 8px; }
-      ::-webkit-scrollbar-track { background: #020617; }
-      ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
-      ::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+      .mandrake-title span {
+        color: #22d3ee;
+      }
+
+      .mandrake-loader {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255,255,255,0.1);
+        border-top-color: #22d3ee;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-top: 25px;
+      }
+      
+      .mandrake-status {
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-top: 20px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        font-weight: 600;
+      }
+
+      .error-btn {
+        margin-top: 20px;
+        padding: 12px 24px;
+        background: #22d3ee;
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        font-weight: 800;
+        text-transform: uppercase;
+        cursor: pointer;
+        font-style: italic;
+        box-shadow: 0 4px 15px rgba(34,211,238,0.3);
+      }
+
+      @keyframes spin { to { transform: rotate(360deg); } }
+      @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
-  }
-}
-</script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/client": "https://esm.sh/react-dom@^19.2.4/client",
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "react/": "https://esm.sh/react@^19.2.4/",
+        "react": "https://esm.sh/react@^19.2.4",
+        "@google/genai": "https://esm.sh/@google/genai@^1.38.0"
+      }
+    }
+    </script>
 </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fallback UI: Visível imediatamente. O React irá substituir isso quando carregar. -->
+      <div id="app-splash" class="mandrake-splash">
+        <div class="mandrake-icon">🕶️</div>
+        <h1 class="mandrake-title">Mandrake<span>Studio</span></h1>
+        <div class="mandrake-loader"></div>
+        <p id="loading-text" class="mandrake-status">Iniciando Sistemas...</p>
+      </div>
+    </div>
+
+    <!-- Error Handler Robusto -->
+    <script>
+      // 1. Captura erros globais de script
+      window.onerror = function(message, source, lineno, colno, error) {
+        showErrorUI("Erro de Script: " + message);
+        return false;
+      };
+
+      // 2. Captura rejeições de promessas (importante para módulos ES)
+      window.addEventListener("unhandledrejection", function(event) {
+        showErrorUI("Falha de Conexão: Verifique sua internet.");
+      });
+
+      // 3. Monitor de Timeout: Se o React não assumir o controle em 8 segundos, algo deu errado
+      setTimeout(function() {
+        var splash = document.getElementById('app-splash');
+        // Se o splash ainda existe e está visível, provavelmente travou
+        if (splash && document.body.contains(splash)) {
+          showErrorUI("O carregamento está demorando muito.");
+        }
+      }, 8000);
+
+      function showErrorUI(detail) {
+        var root = document.getElementById('root');
+        // Apenas substitui se ainda estiver na tela de loading
+        var splash = document.getElementById('app-splash');
+        
+        if (splash) {
+           splash.innerHTML = 
+             '<div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>' +
+             '<h2 style="color: white; font-weight: bold; margin-bottom: 10px; font-size: 1.2rem;">FALHA NA MISSÃO</h2>' +
+             '<p style="color: #94a3b8; max-width: 80%; text-align: center; margin-bottom: 5px;">Não foi possível carregar o sistema.</p>' +
+             '<p style="color: #475569; font-size: 0.7rem; max-width: 90%; text-align: center; margin-bottom: 20px;">' + detail + '</p>' +
+             '<button onclick="window.location.reload()" class="error-btn">TENTAR NOVAMENTE</button>';
+        }
+      }
+    </script>
+    
+    <!-- Entry Point -->
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>

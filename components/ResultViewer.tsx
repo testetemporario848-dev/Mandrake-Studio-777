@@ -6,6 +6,10 @@ interface ResultViewerProps {
   loading: boolean;
   onReset: () => void;
   onDownload: () => void;
+  onUndo: () => void;
+  onRedo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
 }
 
 export const ResultViewer: React.FC<ResultViewerProps> = ({ 
@@ -13,7 +17,11 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
   resultImage, 
   loading,
   onReset,
-  onDownload
+  onDownload,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo
 }) => {
   return (
     <div className="w-full max-w-5xl mx-auto mt-8 animate-fade-in">
@@ -69,20 +77,49 @@ export const ResultViewer: React.FC<ResultViewerProps> = ({
         </div>
       </div>
 
-      {!loading && resultImage && (
-        <div className="flex flex-col sm:flex-row justify-center gap-4 mt-12 pb-20">
-          <button 
-            onClick={onReset}
-            className="px-8 py-4 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-slate-900 transition-all font-bold uppercase tracking-widest text-xs"
-          >
-            Editar Outra Foto
-          </button>
-          <button 
-            onClick={onDownload}
-            className="px-8 py-4 rounded-xl bg-cyan-500 text-black hover:bg-cyan-400 transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20"
-          >
-            Baixar Resultado
-          </button>
+      {!loading && (
+        <div className="flex flex-col gap-4 mt-12 pb-20">
+          
+          {/* Main Actions */}
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            
+            {/* Undo/Redo Buttons */}
+            <div className="flex gap-2">
+              <button
+                onClick={onUndo}
+                disabled={!canUndo}
+                title="Desfazer"
+                className="w-14 h-14 rounded-xl flex items-center justify-center border border-white/10 bg-slate-900 text-white hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+              >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:-translate-x-0.5 transition-transform"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+              </button>
+              <button
+                onClick={onRedo}
+                disabled={!canRedo}
+                title="Refazer"
+                className="w-14 h-14 rounded-xl flex items-center justify-center border border-white/10 bg-slate-900 text-white hover:bg-slate-800 transition-all disabled:opacity-30 disabled:cursor-not-allowed group"
+              >
+                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:translate-x-0.5 transition-transform"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+              </button>
+            </div>
+
+            {resultImage && (
+              <>
+                <button 
+                  onClick={onReset}
+                  className="px-8 py-4 rounded-xl border border-white/10 text-slate-400 hover:text-white hover:bg-slate-900 transition-all font-bold uppercase tracking-widest text-xs flex-1 sm:flex-none"
+                >
+                  Nova Foto
+                </button>
+                <button 
+                  onClick={onDownload}
+                  className="px-8 py-4 rounded-xl bg-cyan-500 text-black hover:bg-cyan-400 transition-all font-black uppercase tracking-widest text-xs shadow-lg shadow-cyan-500/20 flex-1 sm:flex-none"
+                >
+                  Baixar Resultado
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </div>

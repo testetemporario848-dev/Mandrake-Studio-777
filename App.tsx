@@ -78,12 +78,17 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
   const [selectedTools, setSelectedTools] = useState<string[]>(['juliet', 'corrente']);
   const [customRequest, setCustomRequest] = useState('');
+  const [history, setHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  
   const customInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = (base64: string) => {
     setOriginalImage(base64);
     setResultImage(null);
     setError(null);
+    setHistory([]);
+    setHistoryIndex(-1);
   };
 
   const toggleTool = (id: string) => {
@@ -134,6 +139,13 @@ export default function App() {
 
     try {
       const generatedBase64 = await generateEditedImage(originalImage, finalPrompt);
+      
+      // Update History
+      const newHistory = history.slice(0, historyIndex + 1);
+      newHistory.push(generatedBase64);
+      setHistory(newHistory);
+      setHistoryIndex(newHistory.length - 1);
+      
       setResultImage(generatedBase64);
     } catch (err: any) {
       setError("Erro na edição. Tente novamente.");
@@ -143,12 +155,34 @@ export default function App() {
     }
   };
 
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+      setResultImage(history[newIndex]);
+    } else {
+      // Undo to initial state (show sidebar)
+      setHistoryIndex(-1);
+      setResultImage(null);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1;
+      setHistoryIndex(newIndex);
+      setResultImage(history[newIndex]);
+    }
+  };
+
   const handleReset = () => {
     setOriginalImage(null);
     setResultImage(null);
     setError(null);
     setSelectedTools(['juliet', 'corrente']);
     setCustomRequest('');
+    setHistory([]);
+    setHistoryIndex(-1);
   };
 
   return (
@@ -287,6 +321,18 @@ export default function App() {
                           </>
                         )}
                       </button>
+
+                      {/* Redo Button visible in Sidebar if available */}
+                      {historyIndex < history.length - 1 && history.length > 0 && (
+                        <button
+                          onClick={handleRedo}
+                          className="w-full py-4 text-cyan-400 border border-cyan-500/20 bg-cyan-500/10 hover:bg-cyan-500/20 rounded-xl text-[10px] font-black uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-2"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+                          Refazer Edição
+                        </button>
+                      )}
+
                       <button 
                         onClick={handleReset} 
                         className="w-full py-4 text-slate-600 text-[10px] font-black uppercase tracking-[0.3em] hover:text-white transition-colors border border-transparent hover:border-white/5 rounded-xl"
@@ -323,6 +369,10 @@ export default function App() {
                     link.click();
                   }
                 }}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                canUndo={historyIndex >= 0}
+                canRedo={historyIndex < history.length - 1}
               />
             )}
           </div>
